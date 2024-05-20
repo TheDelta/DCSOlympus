@@ -4,15 +4,15 @@
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
 const std::string CurrentDateTime()
 {
-    time_t     now = time(NULL);
-    struct tm  tstruct;
-    char       buf[80];
+    time_t now = time(NULL);
+    struct tm tstruct;
+    char buf[80];
     localtime_s(&tstruct, &now);
     strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
     return buf;
 }
 
-std::wstring to_wstring(const std::string& str)
+std::wstring to_wstring(const std::string &str)
 {
     unsigned int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (unsigned int)str.size(), NULL, 0);
     std::wstring wstrTo(size_needed, 0);
@@ -20,11 +20,15 @@ std::wstring to_wstring(const std::string& str)
     return wstrTo;
 }
 
-std::string to_string(json::value& value) {
-    return to_string(value.as_string());
+std::string to_string(json &value)
+{
+    if (value.is_null())
+        return ""; // FIXME is this correct?
+
+    return value.template get<string>();
 }
 
-std::string to_string(const std::wstring& wstr)
+std::string to_string(const std::wstring &wstr)
 {
     if (wstr.empty())
     {
@@ -59,29 +63,57 @@ std::string random_string(size_t length)
     return str;
 }
 
-bool operator== (const Coords& a, const Coords& b) { return a.lat == b.lat && a.lng == b.lng && a.alt == b.alt; }
-bool operator!= (const Coords& a, const Coords& b) { return !(a == b); }
-bool operator== (const Coords& a, const double& b) { return a.lat == b && a.lng == b && a.alt == b; }
-bool operator!= (const Coords& a, const double& b) { return !(a == b); }
+bool operator==(const Coords &a, const Coords &b) { return a.lat == b.lat && a.lng == b.lng && a.alt == b.alt; }
+bool operator!=(const Coords &a, const Coords &b) { return !(a == b); }
+bool operator==(const Coords &a, const double &b) { return a.lat == b && a.lng == b && a.alt == b; }
+bool operator!=(const Coords &a, const double &b) { return !(a == b); }
 
-bool operator== (const Offset& a, const Offset& b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
-bool operator!= (const Offset& a, const Offset& b) { return !(a == b); }
-bool operator== (const Offset& a, const double& b) { return a.x == b && a.y == b && a.z == b; }
-bool operator!= (const Offset& a, const double& b) { return !(a == b); }
+bool operator==(const Offset &a, const Offset &b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
+bool operator!=(const Offset &a, const Offset &b) { return !(a == b); }
+bool operator==(const Offset &a, const double &b) { return a.x == b && a.y == b && a.z == b; }
+bool operator!=(const Offset &a, const double &b) { return !(a == b); }
 
-
-double knotsToMs(const double knots) {
+double knotsToMs(const double knots)
+{
     return knots / 1.94384;
 }
 
-double msToKnots(const double ms) {
+double msToKnots(const double ms)
+{
     return ms * 1.94384;
 }
 
-double ftToM(const double ft) {
+double ftToM(const double ft)
+{
     return ft * 0.3048;
 }
 
-double mToFt(const double m) {
+double mToFt(const double m)
+{
     return m / 0.3048;
+}
+
+bool json_has_boolean_field(json obj, std::string field)
+{
+    return obj.contains(field) && obj[field].is_boolean();
+}
+
+bool json_has_number_field(json obj, std::string field)
+{
+    return obj.contains(field) && obj[field].is_number();
+}
+
+bool json_has_string_field(json obj, std::string field)
+{
+    return obj.contains(field) && obj[field].is_string();
+}
+
+bool json_has_object_field(json obj, std::string field)
+{
+    return obj.is_object() && obj.contains(field);
+}
+
+bool json_has_array_field(json obj, std::string field)
+{
+    return obj.is_array() && obj.contains(field);
 }

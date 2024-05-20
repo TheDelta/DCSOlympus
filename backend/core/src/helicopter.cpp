@@ -9,25 +9,28 @@
 #include <GeographicLib/Geodesic.hpp>
 using namespace GeographicLib;
 
-extern Scheduler* scheduler;
-extern UnitsManager* unitsManager;
-json::value Helicopter::database = json::value();
+extern Scheduler *scheduler;
+extern UnitsManager *unitsManager;
+json Helicopter::database = json();
 extern string instancePath;
 
-void Helicopter::loadDatabase(string path) {
-	std::ifstream ifstream(instancePath + path);
-	std::stringstream ss;
-	ss << ifstream.rdbuf();
-	std::error_code errorCode;
-	database = json::value::parse(ss.str(), errorCode);
-	if (database.is_object())
-		log("Helicopters database loaded correctly from " + instancePath + path);
-	else
-		log("Error reading Helicopters database file");
+void Helicopter::loadDatabase(string path)
+{
+	try {
+		std::ifstream ifstream(instancePath + path);
+		database = json::parse(ifstream);
+		if (database.is_object())
+			log("Helicopters database loaded correctly from " + instancePath + path);
+		else
+			log("Error reading Helicopters database file");
+	}
+	catch (const exception& e) {
+		log("Exception during database read: " + std::string(e.what()));
+	}
 }
 
 /* Helicopter */
-Helicopter::Helicopter(json::value json, unsigned int ID) : AirUnit(json, ID)
+Helicopter::Helicopter(json json, unsigned int ID) : AirUnit(json, ID)
 {
 	log("New Helicopter created with ID: " + to_string(ID));
 

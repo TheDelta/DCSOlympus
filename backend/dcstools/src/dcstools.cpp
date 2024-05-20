@@ -1,6 +1,6 @@
 #include "dcstools.h"
 
-void LogInfo(lua_State* L, string message)
+void LogInfo(lua_State *L, string message)
 {
     STACK_INIT;
 
@@ -14,7 +14,7 @@ void LogInfo(lua_State* L, string message)
     Log(L, message, infoLevel);
 }
 
-void LogWarning(lua_State* L, string message)
+void LogWarning(lua_State *L, string message)
 {
     STACK_INIT;
 
@@ -28,7 +28,7 @@ void LogWarning(lua_State* L, string message)
     Log(L, message, warningLevel);
 }
 
-void LogError(lua_State* L, string message)
+void LogError(lua_State *L, string message)
 {
     STACK_INIT;
 
@@ -42,7 +42,7 @@ void LogError(lua_State* L, string message)
     Log(L, message, errorLevel);
 }
 
-void Log(lua_State* L, string message, unsigned int level)
+void Log(lua_State *L, string message, unsigned int level)
 {
     STACK_INIT;
 
@@ -56,7 +56,7 @@ void Log(lua_State* L, string message, unsigned int level)
     STACK_CLEAN;
 }
 
-void getAllUnits(lua_State* L, map<unsigned int, json::value>& unitJSONs)
+void getAllUnits(lua_State *L, map<unsigned int, json> &unitJSONs)
 {
     unsigned int res = 0;
 
@@ -84,7 +84,7 @@ void getAllUnits(lua_State* L, map<unsigned int, json::value>& unitJSONs)
         {
             unsigned int ID = static_cast<unsigned int>(lua_tonumber(L, -2));
             if (unitJSONs.find(ID) == unitJSONs.end())
-                unitJSONs[ID] = json::value::object();
+                unitJSONs[ID] = json::object();
             luaTableToJSON(L, -1, unitJSONs[ID]);
             STACK_POP(1)
         }
@@ -95,7 +95,7 @@ exit:
     return;
 }
 
-int dostring_in(lua_State* L, string target, string command)
+int dostring_in(lua_State *L, string target, string command)
 {
     lua_getglobal(L, "net");
     lua_getfield(L, -1, "dostring_in");

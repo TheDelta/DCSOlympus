@@ -9,25 +9,28 @@
 #include <GeographicLib/Geodesic.hpp>
 using namespace GeographicLib;
 
-extern Scheduler* scheduler;
-extern UnitsManager* unitsManager;
-json::value NavyUnit::database = json::value();
+extern Scheduler *scheduler;
+extern UnitsManager *unitsManager;
+json NavyUnit::database = json();
 extern string instancePath;
 
-void NavyUnit::loadDatabase(string path) {
-	std::ifstream ifstream(instancePath + path);
-	std::stringstream ss;
-	ss << ifstream.rdbuf();
-	std::error_code errorCode;
-	database = json::value::parse(ss.str(), errorCode);
-	if (database.is_object())
-		log("NavyUnits database loaded correctly from " + instancePath + path);
-	else
-		log("Error reading NavyUnits database file");
+void NavyUnit::loadDatabase(string path)
+{
+	try {
+		std::ifstream ifstream(instancePath + path);
+		database = json::parse(ifstream);
+		if (database.is_object())
+			log("NavyUnits database loaded correctly from " + instancePath + path);
+		else
+			log("Error reading NavyUnits database file");
+	}
+	catch (const exception& e) {
+		log("Exception during database read: " + std::string(e.what()));
+	}
 }
 
 /* Navy Unit */
-NavyUnit::NavyUnit(json::value json, unsigned int ID) : Unit(json, ID)
+NavyUnit::NavyUnit(json json, unsigned int ID) : Unit(json, ID)
 {
 	log("New Navy Unit created with ID: " + to_string(ID));
 
@@ -37,7 +40,8 @@ NavyUnit::NavyUnit(json::value json, unsigned int ID) : Unit(json, ID)
 
 void NavyUnit::setDefaults(bool force)
 {
-	if (!getAlive() || !getControlled() || getHuman() || !getIsLeader()) return;
+	if (!getAlive() || !getControlled() || getHuman() || !getIsLeader())
+		return;
 
 	/* Set the default IDLE state */
 	setState(State::IDLE);
@@ -53,22 +57,28 @@ void NavyUnit::setState(unsigned char newState)
 	Coords currentTargetPosition = getTargetPosition();
 
 	/************ Perform any action required when LEAVING a state ************/
-	if (newState != state) {
-		switch (state) {
-		case State::IDLE: {
+	if (newState != state)
+	{
+		switch (state)
+		{
+		case State::IDLE:
+		{
 			break;
 		}
-		case State::REACH_DESTINATION: {
+		case State::REACH_DESTINATION:
+		{
 			break;
 		}
-		case State::ATTACK: {
+		case State::ATTACK:
+		{
 			setTargetID(NULL);
 			break;
 		}
 		case State::FIRE_AT_AREA:
 		case State::SIMULATE_FIRE_FIGHT:
 		case State::SCENIC_AAA:
-		case State::MISS_ON_PURPOSE: {
+		case State::MISS_ON_PURPOSE:
+		{
 			setTargetPosition(Coords(NULL));
 			break;
 		}
@@ -78,45 +88,53 @@ void NavyUnit::setState(unsigned char newState)
 	}
 
 	/************ Perform any action required when ENTERING a state ************/
-	switch (newState) {
-	case State::IDLE: {
+	switch (newState)
+	{
+	case State::IDLE:
+	{
 		setEnableTaskCheckFailed(false);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::REACH_DESTINATION: {
+	case State::REACH_DESTINATION:
+	{
 		setEnableTaskCheckFailed(true);
 		resetActiveDestination();
 		break;
 	}
-	case State::ATTACK: {
+	case State::ATTACK:
+	{
 		setEnableTaskCheckFailed(true);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::FIRE_AT_AREA: {
+	case State::FIRE_AT_AREA:
+	{
 		setTargetPosition(currentTargetPosition);
 		setEnableTaskCheckFailed(true);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::SIMULATE_FIRE_FIGHT: {
+	case State::SIMULATE_FIRE_FIGHT:
+	{
 		setTargetPosition(currentTargetPosition);
 		setEnableTaskCheckFailed(false);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::SCENIC_AAA: {
+	case State::SCENIC_AAA:
+	{
 		setEnableTaskCheckFailed(false);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::MISS_ON_PURPOSE: {
+	case State::MISS_ON_PURPOSE:
+	{
 		setEnableTaskCheckFailed(false);
 		clearActivePath();
 		resetActiveDestination();
@@ -141,14 +159,17 @@ void NavyUnit::AIloop()
 {
 	srand(static_cast<unsigned int>(time(NULL)) + ID);
 
-	switch (state) {
-	case State::IDLE: {
+	switch (state)
+	{
+	case State::IDLE:
+	{
 		setTask("Idle");
 		if (getHasTask())
 			resetTask();
 		break;
 	}
-	case State::REACH_DESTINATION: {
+	case State::REACH_DESTINATION:
+	{
 		string enrouteTask = "{}";
 		bool looping = false;
 
@@ -159,8 +180,10 @@ void NavyUnit::AIloop()
 			else
 				goToDestination(enrouteTask);
 		}
-		else {
-			if (isDestinationReached(NAVY_DEST_DIST_THR)) {
+		else
+		{
+			if (isDestinationReached(NAVY_DEST_DIST_THR))
+			{
 				if (updateActivePath(looping) && setActiveDestination())
 					goToDestination(enrouteTask);
 				else
@@ -170,46 +193,55 @@ void NavyUnit::AIloop()
 
 		break;
 	}
-	case State::ATTACK: {
-		Unit* target = unitsManager->getUnit(getTargetID());
-		if (target != nullptr) {
+	case State::ATTACK:
+	{
+		Unit *target = unitsManager->getUnit(getTargetID());
+		if (target != nullptr)
+		{
 			setTask("Attacking " + target->getUnitName());
 
-			if (!getHasTask()) {
+			if (!getHasTask())
+			{
 				/* Send the command */
 				std::ostringstream taskSS;
 				taskSS.precision(10);
 				taskSS << "{id = 'AttackUnit', unitID = " << target->getID() << " }";
-				Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
+				Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																	   { this->setHasTaskAssigned(true); }));
 				scheduler->appendCommand(command);
 				setHasTask(true);
 			}
 		}
-		else {
+		else
+		{
 			setState(State::IDLE);
 		}
 
 		break;
 	}
-	case State::FIRE_AT_AREA: {
+	case State::FIRE_AT_AREA:
+	{
 		setTask("Firing at area");
 
-		if (!getHasTask()) {
+		if (!getHasTask())
+		{
 			std::ostringstream taskSS;
 			taskSS.precision(10);
 
 			taskSS << "{id = 'FireAtPoint', lat = " << targetPosition.lat << ", lng = " << targetPosition.lng << ", radius = 1000}";
-			Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
+			Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																   { this->setHasTaskAssigned(true); }));
 			scheduler->appendCommand(command);
 			setHasTask(true);
 		}
 
 		break;
 	}
-	case State::SIMULATE_FIRE_FIGHT: {
+	case State::SIMULATE_FIRE_FIGHT:
+	{
 		setTask("Simulating fire fight");
 
-		// TODO 
+		// TODO
 
 		setState(State::IDLE);
 		break;
@@ -234,9 +266,10 @@ void NavyUnit::changeSpeed(string change)
 
 void NavyUnit::setOnOff(bool newOnOff, bool force)
 {
-	if (newOnOff != onOff || force) {
+	if (newOnOff != onOff || force)
+	{
 		Unit::setOnOff(newOnOff, force);
-		Command* command = dynamic_cast<Command*>(new SetOnOff(groupName, onOff));
+		Command *command = dynamic_cast<Command *>(new SetOnOff(groupName, onOff));
 		scheduler->appendCommand(command);
 	}
 }

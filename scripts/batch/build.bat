@@ -1,5 +1,6 @@
 REM dll version file must be set before compilation and changes can be committed
 call node .\scripts\node\set_version_dll.js
+call node .\scripts\node\fix_crow_issue.js
 
 cd backend
 msbuild olympus.sln /t:Build /p:Configuration=Release

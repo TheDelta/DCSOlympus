@@ -15,24 +15,24 @@ using namespace std::chrono;
 class Unit
 {
 public:
-	Unit(json::value json, unsigned int ID);
+	Unit(json json, unsigned int ID);
 	~Unit();
 
 	/********** Methods **********/
-	void initialize(json::value json);
+	void initialize(json json);
 	virtual void setDefaults(bool force = false);
 
 	void runAILoop();
 
-	void update(json::value json, double dt);
+	void update(json json, double dt);
 	void refreshLeaderData(unsigned long long time);
 
 	unsigned int getID() { return ID; }
-	void getData(stringstream& ss, unsigned long long time);
+	void getData(stringstream &ss, unsigned long long time);
 	Coords getActiveDestination() { return activeDestination; }
 
-	virtual void changeSpeed(string change) {};
-	virtual void changeAltitude(string change) {};
+	virtual void changeSpeed(string change){};
+	virtual void changeAltitude(string change){};
 	bool setActiveDestination();
 	void resetActiveDestination();
 	void landAt(Coords loc);
@@ -151,7 +151,7 @@ public:
 	virtual vector<DataTypes::Contact> getContacts() { return contacts; }
 	virtual list<Coords> getActivePath() { return activePath; }
 	virtual bool getIsLeader() { return isLeader; }
-	virtual unsigned char getOperateAs() { return operateAs;  }
+	virtual unsigned char getOperateAs() { return operateAs; }
 	virtual unsigned char getShotsScatter() { return shotsScatter; }
 	virtual unsigned char getShotsIntensity() { return shotsIntensity; }
 	virtual unsigned char getHealth() { return health; }
@@ -183,7 +183,7 @@ protected:
 	bool followRoads = false;
 	unsigned short fuel = 0;
 	double desiredSpeed = 0;
-	bool desiredSpeedType = 0;	/* CAS */
+	bool desiredSpeedType = 0; /* CAS */
 	double desiredAltitude = 1;
 	bool desiredAltitudeType = 0; /* ASL */
 	unsigned int leaderID = NULL;
@@ -209,7 +209,7 @@ protected:
 	/********** Other **********/
 	unsigned int taskCheckCounter = 0;
 	unsigned int internalCounter = 0;
-	Unit* missOnPurposeTarget = nullptr;
+	Unit *missOnPurposeTarget = nullptr;
 	bool hasTaskAssigned = false;
 	double initialFuel = 0;
 	map<unsigned char, unsigned long long> updateTimeMap;
@@ -219,16 +219,17 @@ protected:
 	/********** Private methods **********/
 	virtual void AIloop() = 0;
 
-	void appendString(stringstream& ss, const unsigned char& datumIndex, const string& datumValue) {
+	void appendString(stringstream &ss, const unsigned char &datumIndex, const string &datumValue)
+	{
 		const unsigned short size = static_cast<unsigned short>(datumValue.size());
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&size, sizeof(unsigned short));
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&size, sizeof(unsigned short));
 		ss << datumValue;
 	}
 
 	/********** Template methods **********/
 	template <typename T>
-	void updateValue(T& value, T& newValue, unsigned char datumIndex)
+	void updateValue(T &value, T &newValue, unsigned char datumIndex)
 	{
 		if (newValue != value)
 		{
@@ -238,28 +239,32 @@ protected:
 	}
 
 	template <typename T>
-	void appendNumeric(stringstream& ss, const unsigned char& datumIndex, T& datumValue) {
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&datumValue, sizeof(T));
+	void appendNumeric(stringstream &ss, const unsigned char &datumIndex, T &datumValue)
+	{
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&datumValue, sizeof(T));
 	}
 
 	template <typename T>
-	void appendVector(stringstream& ss, const unsigned char& datumIndex, vector<T>& datumValue) {
+	void appendVector(stringstream &ss, const unsigned char &datumIndex, vector<T> &datumValue)
+	{
 		const unsigned short size = static_cast<unsigned short>(datumValue.size());
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&size, sizeof(unsigned short));
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&size, sizeof(unsigned short));
 
-		for (auto& el : datumValue)
-			ss.write((const char*)&el, sizeof(T));
+		for (auto &el : datumValue)
+			ss.write((const char *)&el, sizeof(T));
 	}
 
 	template <typename T>
-	void appendList(stringstream& ss, const unsigned char& datumIndex, list<T>& datumValue) {
-		const unsigned short size = static_cast<unsigned short>(datumValue.size());;
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&size, sizeof(unsigned short));
+	void appendList(stringstream &ss, const unsigned char &datumIndex, list<T> &datumValue)
+	{
+		const unsigned short size = static_cast<unsigned short>(datumValue.size());
+		;
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&size, sizeof(unsigned short));
 
-		for (auto& el: datumValue)
-			ss.write((const char*)&el, sizeof(T));
+		for (auto &el : datumValue)
+			ss.write((const char *)&el, sizeof(T));
 	}
 };

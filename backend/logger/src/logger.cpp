@@ -5,19 +5,19 @@
 using namespace std::chrono;
 
 const string Logger::m_sFileName = LOG_NAME;
-Logger* Logger::m_pThis = NULL;
+Logger *Logger::m_pThis = NULL;
 ofstream Logger::m_Logfile;
 std::map<unsigned long long, std::string> Logger::m_logs;
 std::string Logger::m_dirPath;
 
 Logger::Logger()
 {
-
 }
 
-Logger* Logger::GetLogger()
+Logger *Logger::GetLogger()
 {
-    if (m_pThis == NULL) {
+    if (m_pThis == NULL)
+    {
         m_pThis = new Logger();
     }
     return m_pThis;
@@ -30,10 +30,12 @@ void Logger::setDirectory(string newDirPath)
 
 void Logger::Open()
 {
-    try {
+    try
+    {
         m_Logfile.open((m_dirPath + m_sFileName).c_str(), ios::out | ios::app);
     }
-    catch (...) {
+    catch (...)
+    {
         std::filesystem::path m_dirPath = std::filesystem::temp_directory_path();
         m_Logfile.open((m_dirPath.string() + m_sFileName).c_str(), ios::out | ios::app);
     }
@@ -44,7 +46,7 @@ void Logger::Close()
     m_Logfile.close();
 }
 
-void Logger::toJSON(json::value& json, unsigned long long time)
+void Logger::toJSON(json &data, unsigned long long time)
 {
     lock_guard<mutex> guard(mutexLock);
     /* Loop on the logs in reverse since we are usually only interested in the very last added logs */
@@ -52,12 +54,13 @@ void Logger::toJSON(json::value& json, unsigned long long time)
     while (itr != m_logs.begin())
     {
         --itr;
-        if (itr->first < time) return;
-        json[to_wstring(itr->first)] = json::value::string(to_wstring(itr->second));
+        if (itr->first < time)
+            return;
+        data[to_string(itr->first)] = itr->second;
     }
 }
 
-void Logger::log(const string& message, bool addToJSON)
+void Logger::log(const string &message, bool addToJSON)
 {
     lock_guard<mutex> guard(mutexLock);
     Open();
@@ -69,7 +72,7 @@ void Logger::log(const string& message, bool addToJSON)
     Close();
 }
 
-void Logger::log(const wstring& message, bool addToJSON)
+void Logger::log(const wstring &message, bool addToJSON)
 {
     lock_guard<mutex> guard(mutexLock);
     Open();

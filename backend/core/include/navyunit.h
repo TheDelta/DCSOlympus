@@ -6,7 +6,7 @@
 class NavyUnit : public Unit
 {
 public:
-	NavyUnit(json::value json, unsigned int ID);
+	NavyUnit(json json, unsigned int ID);
 
 	static void loadDatabase(string path);
 
@@ -18,5 +18,5 @@ public:
 
 protected:
 	virtual void AIloop();
-	static json::value database;
+	static json database;
 };

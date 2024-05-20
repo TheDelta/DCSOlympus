@@ -11,7 +11,7 @@ public:
 
 	void appendCommand(Command* command);
 	void execute(lua_State* L);
-	void handleRequest(string key, json::value value, string username, json::value& answer);
+	void handleRequest(string key, json value, string username, json& answer);
 	bool checkSpawnPoints(int spawnPoints, string coalition);
 	bool isCommandExecuted(string commandHash) { return (find(executedCommandsHashes.begin(), executedCommandsHashes.end(), commandHash) != executedCommandsHashes.end()); }
 	
@@ -22,7 +22,7 @@ public:
 	void setBlueSpawnPoints(int newBlueSpawnPoints) { blueSpawnPoints = newBlueSpawnPoints; }
 	void setRedSpawnPoints(int newRedSpawnPoints) { redSpawnPoints = newRedSpawnPoints; }
 	void setEras(vector<string> newEras) { eras = newEras; }
-	void setCommandModeOptions(json::value newOptions);
+	void setCommandModeOptions(json newOptions);
 
 	int getFrameRate() { return static_cast<int>(round(frameRate)); };
 	int getLoad();
@@ -32,7 +32,7 @@ public:
 	int getBlueSpawnPoints() { return blueSpawnPoints; }
 	int getRedSpawnPoints() { return redSpawnPoints; }
 	vector<string> getEras() { return eras; }
-	json::value getCommandModeOptions();
+	json getCommandModeOptions();
 
 private:
 	list<Command*> commands;

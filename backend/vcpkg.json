@@ -1,7 +1,9 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-    "dependencies": [
-        "cpprestsdk",
-        "geographiclib"
-    ]
-  } 
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "dependencies": [
+    "geographiclib",
+    "nlohmann-json",
+    "crow"
+  ],
+  "builtin-baseline": "28b1cf627c0570b3e094192df2fce31a3a2bc1d3"
+}

@@ -18,7 +18,7 @@ struct Offset {
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
 const DllExport std::string CurrentDateTime();
 std::wstring DllExport to_wstring(const std::string& str);
-std::string DllExport to_string(json::value& value);
+std::string DllExport to_string(json& value);
 std::string DllExport to_string(const std::wstring& wstr);
 std::string DllExport random_string(size_t length);
 
@@ -37,3 +37,8 @@ double DllExport msToKnots(const double ms);
 double DllExport ftToM(const double ft);
 double DllExport mToFt(const double m);
 
+bool DllExport json_has_boolean_field(json obj, std::string field);
+bool DllExport json_has_string_field(json obj, std::string field);
+bool DllExport json_has_number_field(json obj, std::string field);
+bool DllExport json_has_object_field(json obj, std::string field);
+bool DllExport json_has_array_field(json obj, std::string field);

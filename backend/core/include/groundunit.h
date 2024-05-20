@@ -6,7 +6,7 @@
 class GroundUnit : public Unit
 {
 public:
-	GroundUnit(json::value json, unsigned int ID);
+	GroundUnit(json json, unsigned int ID);
 
 	static void loadDatabase(string path);
 
@@ -21,5 +21,5 @@ public:
 
 protected:
 	virtual void AIloop();
-	static json::value database;
+	static json database;
 };

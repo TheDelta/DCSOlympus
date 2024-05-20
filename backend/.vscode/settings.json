@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "*.embeddedhtml": "html",
+    "*.inc": "php",
+    "*.pre.php": "php",
+    "stdexcept": "cpp",
+    "fstream": "cpp",
+    "xlocmes": "cpp"
+  },
+  "sonarlint.pathToCompileCommands": "${workspaceFolder}\\vcpkg_installed\\vcpkg\\blds\\libuv\\x64-windows-rel\\compile_commands.json"
+}

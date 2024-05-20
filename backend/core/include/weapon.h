@@ -13,14 +13,14 @@ using namespace std::chrono;
 class Weapon
 {
 public:
-	Weapon(json::value json, unsigned int ID);
+	Weapon(json json, unsigned int ID);
 	~Weapon();
 
 	/********** Methods **********/
-	void initialize(json::value json);
-	void update(json::value json, double dt);
+	void initialize(json json);
+	void update(json json, double dt);
 	unsigned int getID() { return ID; }
-	void getData(stringstream& ss, unsigned long long time);
+	void getData(stringstream &ss, unsigned long long time);
 	void triggerUpdate(unsigned char datumIndex);
 	bool hasFreshData(unsigned long long time);
 	bool checkFreshness(unsigned char datumIndex, unsigned long long time);
@@ -42,7 +42,7 @@ public:
 	virtual Coords getPosition() { return position; }
 	virtual double getSpeed() { return speed; }
 	virtual double getHeading() { return heading; }
-	
+
 protected:
 	unsigned int ID;
 
@@ -53,21 +53,22 @@ protected:
 	Coords position = Coords(NULL);
 	double speed = NULL;
 	double heading = NULL;
-	
+
 	/********** Other **********/
 	map<unsigned char, unsigned long long> updateTimeMap;
 
 	/********** Private methods **********/
-	void appendString(stringstream& ss, const unsigned char& datumIndex, const string& datumValue) {
+	void appendString(stringstream &ss, const unsigned char &datumIndex, const string &datumValue)
+	{
 		const unsigned short size = static_cast<unsigned short>(datumValue.size());
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&size, sizeof(unsigned short));
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&size, sizeof(unsigned short));
 		ss << datumValue;
 	}
 
 	/********** Template methods **********/
 	template <typename T>
-	void updateValue(T& value, T& newValue, unsigned char datumIndex)
+	void updateValue(T &value, T &newValue, unsigned char datumIndex)
 	{
 		if (newValue != value)
 		{
@@ -77,40 +78,43 @@ protected:
 	}
 
 	template <typename T>
-	void appendNumeric(stringstream& ss, const unsigned char& datumIndex, T& datumValue) {
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&datumValue, sizeof(T));
+	void appendNumeric(stringstream &ss, const unsigned char &datumIndex, T &datumValue)
+	{
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&datumValue, sizeof(T));
 	}
 
 	template <typename T>
-	void appendVector(stringstream& ss, const unsigned char& datumIndex, vector<T>& datumValue) {
+	void appendVector(stringstream &ss, const unsigned char &datumIndex, vector<T> &datumValue)
+	{
 		const unsigned short size = datumValue.size();
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&size, sizeof(unsigned short));
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&size, sizeof(unsigned short));
 
-		for (auto& el : datumValue)
-			ss.write((const char*)&el, sizeof(T));
+		for (auto &el : datumValue)
+			ss.write((const char *)&el, sizeof(T));
 	}
 
 	template <typename T>
-	void appendList(stringstream& ss, const unsigned char& datumIndex, list<T>& datumValue) {
+	void appendList(stringstream &ss, const unsigned char &datumIndex, list<T> &datumValue)
+	{
 		const unsigned short size = datumValue.size();
-		ss.write((const char*)&datumIndex, sizeof(unsigned char));
-		ss.write((const char*)&size, sizeof(unsigned short));
+		ss.write((const char *)&datumIndex, sizeof(unsigned char));
+		ss.write((const char *)&size, sizeof(unsigned short));
 
-		for (auto& el : datumValue)
-			ss.write((const char*)&el, sizeof(T));
+		for (auto &el : datumValue)
+			ss.write((const char *)&el, sizeof(T));
 	}
 };
 
 class Missile : public Weapon
 {
 public:
-	Missile(json::value json, unsigned int ID);
+	Missile(json json, unsigned int ID);
 };
 
 class Bomb : public Weapon
 {
 public:
-	Bomb(json::value json, unsigned int ID);
+	Bomb(json json, unsigned int ID);
 };

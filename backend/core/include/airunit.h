@@ -5,20 +5,20 @@
 #include "luatools.h"
 #include "Unit.h"
 
-#define AIR_DEST_DIST_THR 2000	// Meters
+#define AIR_DEST_DIST_THR 2000 // Meters
 
 class AirUnit : public Unit
 {
 public:
-	AirUnit(json::value json, unsigned int ID);
+	AirUnit(json json, unsigned int ID);
 
 	virtual void setDefaults(bool force = false);
 	virtual void setState(unsigned char newState);
 
 	virtual void changeSpeed(string change) = 0;
 	virtual void changeAltitude(string change) = 0;
-	virtual double getDestinationReachedThreshold() { return AIR_DEST_DIST_THR;  }
-	
+	virtual double getDestinationReachedThreshold() { return AIR_DEST_DIST_THR; }
+
 protected:
 	virtual void AIloop();
 };

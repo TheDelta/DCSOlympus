@@ -9,19 +9,19 @@
 #include <GeographicLib/Geodesic.hpp>
 using namespace GeographicLib;
 
-extern Scheduler* scheduler;
-extern UnitsManager* unitsManager;
+extern Scheduler *scheduler;
+extern UnitsManager *unitsManager;
 
 /* Air unit */
-AirUnit::AirUnit(json::value json, unsigned int ID) : Unit(json, ID)
-{
-	
-};
+AirUnit::AirUnit(json json, unsigned int ID) : Unit(json, ID){
+
+											   };
 
 void AirUnit::setDefaults(bool force)
 {
-	if (!getAlive() || !getControlled() || getHuman() || !getIsLeader()) return;
-	
+	if (!getAlive() || !getControlled() || getHuman() || !getIsLeader())
+		return;
+
 	/* Set the default IDLE state */
 	setState(State::IDLE);
 
@@ -43,35 +43,45 @@ void AirUnit::setState(unsigned char newState)
 	Coords currentTargetPosition = getTargetPosition();
 
 	/************ Perform any action required when LEAVING a state ************/
-	if (newState != state) {
-		switch (state) {
-		case State::IDLE: {
+	if (newState != state)
+	{
+		switch (state)
+		{
+		case State::IDLE:
+		{
 			break;
 		}
-		case State::REACH_DESTINATION: {
+		case State::REACH_DESTINATION:
+		{
 			break;
 		}
-		case State::ATTACK: {
+		case State::ATTACK:
+		{
 			setTargetID(NULL);
 			break;
 		}
-		case State::FOLLOW: {
+		case State::FOLLOW:
+		{
 			setLeaderID(NULL);
 			break;
 		}
-		case State::LAND: {
+		case State::LAND:
+		{
 			break;
 		}
-		case State::REFUEL: {
+		case State::REFUEL:
+		{
 			break;
 		}
 		case State::BOMB_POINT:
-		case State::CARPET_BOMB: 
-		case State::BOMB_BUILDING: {
+		case State::CARPET_BOMB:
+		case State::BOMB_BUILDING:
+		{
 			setTargetPosition(Coords(NULL));
 			break;
 		}
-		case State::LAND_AT_POINT: {
+		case State::LAND_AT_POINT:
+		{
 			break;
 		}
 		default:
@@ -80,22 +90,27 @@ void AirUnit::setState(unsigned char newState)
 	}
 
 	/************ Perform any action required when ENTERING a state ************/
-	switch (newState) {
-	case State::IDLE: {
+	switch (newState)
+	{
+	case State::IDLE:
+	{
 		setEnableTaskCheckFailed(false);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::REACH_DESTINATION: {
+	case State::REACH_DESTINATION:
+	{
 		setEnableTaskCheckFailed(true);
 		resetActiveDestination();
 		break;
 	}
-	case State::ATTACK: {
+	case State::ATTACK:
+	{
 		setEnableTaskCheckFailed(true);
-		if (isTargetAlive()) {
-			Unit* target = unitsManager->getUnit(targetID);
+		if (isTargetAlive())
+		{
+			Unit *target = unitsManager->getUnit(targetID);
 			Coords targetPosition = Coords(target->getPosition().lat, target->getPosition().lng, 0);
 			clearActivePath();
 			pushActivePathFront(targetPosition);
@@ -103,18 +118,21 @@ void AirUnit::setState(unsigned char newState)
 		}
 		break;
 	}
-	case State::FOLLOW: {
+	case State::FOLLOW:
+	{
 		setEnableTaskCheckFailed(true);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::LAND: {
+	case State::LAND:
+	{
 		setEnableTaskCheckFailed(false);
 		resetActiveDestination();
 		break;
 	}
-	case State::REFUEL: {
+	case State::REFUEL:
+	{
 		setEnableTaskCheckFailed(true);
 		initialFuel = fuel;
 		clearActivePath();
@@ -123,14 +141,16 @@ void AirUnit::setState(unsigned char newState)
 	}
 	case State::BOMB_POINT:
 	case State::CARPET_BOMB:
-	case State::BOMB_BUILDING: {
+	case State::BOMB_BUILDING:
+	{
 		setTargetPosition(currentTargetPosition);
 		setEnableTaskCheckFailed(true);
 		clearActivePath();
 		resetActiveDestination();
 		break;
 	}
-	case State::LAND_AT_POINT:  {
+	case State::LAND_AT_POINT:
+	{
 		setEnableTaskCheckFailed(true);
 		resetActiveDestination();
 		break;
@@ -155,225 +175,254 @@ void AirUnit::AIloop()
 	srand(static_cast<unsigned int>(time(NULL)) + ID);
 
 	/* State machine */
-	switch (state) {
-		case State::IDLE: {
-			if (isActiveTanker)
-				setTask("Tanker racetrack");
-			else if (isActiveAWACS)
-				setTask("AWACS racetrack");
-			else
-				setTask("Idle");
-			
-			if (!getHasTask())
-			{
-				std::ostringstream taskSS;
-				if (isActiveTanker) {
-					taskSS << "{ [1] = { id = 'Tanker' }, [2] = { id = 'Orbit', pattern = 'Race-Track', altitude = " << 
-						desiredAltitude << ", speed = " << desiredSpeed << ", altitudeType = '" << 
-						(desiredAltitudeType ? "AGL" : "ASL") << "', speedType = '" << (desiredSpeedType ? "GS" : "CAS") << "' }}";
-				}
-				else if (isActiveAWACS) {
-					taskSS << "{ [1] = { id = 'AWACS' }, [2] = { id = 'Orbit', pattern = 'Circle', altitude = " << 
-						desiredAltitude << ", speed = " << desiredSpeed << ", altitudeType = '" << 
-						(desiredAltitudeType ? "AGL" : "ASL") << "', speedType = '" << (desiredSpeedType ? "GS" : "CAS") << "' }}";
-				}
-				else {
-					taskSS << "{ id = 'Orbit', pattern = 'Circle', altitude = " << 
-						desiredAltitude << ", speed = " << desiredSpeed << ", altitudeType = '" << 
-						(desiredAltitudeType ? "AGL" : "ASL") << "', speedType = '" << (desiredSpeedType ? "GS" : "CAS") << "'}";
-				}
-				Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
-				scheduler->appendCommand(command);
-				setHasTask(true);
-			}
-			break;
-		}
-		case State::REACH_DESTINATION: {
-			string enrouteTask = "";
-			bool looping = false;
+	switch (state)
+	{
+	case State::IDLE:
+	{
+		if (isActiveTanker)
+			setTask("Tanker racetrack");
+		else if (isActiveAWACS)
+			setTask("AWACS racetrack");
+		else
+			setTask("Idle");
 
+		if (!getHasTask())
+		{
+			std::ostringstream taskSS;
 			if (isActiveTanker)
 			{
-				enrouteTask = "{ id = 'Tanker' }";
-				setTask("Tanker");
+				taskSS << "{ [1] = { id = 'Tanker' }, [2] = { id = 'Orbit', pattern = 'Race-Track', altitude = " << desiredAltitude << ", speed = " << desiredSpeed << ", altitudeType = '" << (desiredAltitudeType ? "AGL" : "ASL") << "', speedType = '" << (desiredSpeedType ? "GS" : "CAS") << "' }}";
 			}
 			else if (isActiveAWACS)
 			{
-				enrouteTask = "{ id = 'AWACS' }";
-				setTask("AWACS");
+				taskSS << "{ [1] = { id = 'AWACS' }, [2] = { id = 'Orbit', pattern = 'Circle', altitude = " << desiredAltitude << ", speed = " << desiredSpeed << ", altitudeType = '" << (desiredAltitudeType ? "AGL" : "ASL") << "', speedType = '" << (desiredSpeedType ? "GS" : "CAS") << "' }}";
 			}
 			else
 			{
-				enrouteTask = "nil";
-				setTask("Reaching destination");
+				taskSS << "{ id = 'Orbit', pattern = 'Circle', altitude = " << desiredAltitude << ", speed = " << desiredSpeed << ", altitudeType = '" << (desiredAltitudeType ? "AGL" : "ASL") << "', speedType = '" << (desiredSpeedType ? "GS" : "CAS") << "'}";
 			}
-			
-			if (activeDestination == NULL || !getHasTask())
-			{
-				if (!setActiveDestination())
-					setState(State::IDLE);
-				else
-					goToDestination(enrouteTask);
-			}
-			else {
-				if (isDestinationReached(getDestinationReachedThreshold())) {
-					if (updateActivePath(looping) && setActiveDestination())
-						goToDestination(enrouteTask);
-					else 
-						setState(State::IDLE);
-				}
-			}			
-			break;
+			Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																   { this->setHasTaskAssigned(true); }));
+			scheduler->appendCommand(command);
+			setHasTask(true);
 		}
-		case State::LAND: {
-			string enrouteTask = "{ id = 'Land' }";
-			setTask("Landing");
+		break;
+	}
+	case State::REACH_DESTINATION:
+	{
+		string enrouteTask = "";
+		bool looping = false;
 
-			if (activeDestination == NULL)
-			{
-				setActiveDestination();
-				goToDestination(enrouteTask);
-			}
-			break;
+		if (isActiveTanker)
+		{
+			enrouteTask = "{ id = 'Tanker' }";
+			setTask("Tanker");
 		}
-		case State::ATTACK: {
-			/* If the target is not alive (either not set or was succesfully destroyed) go back to REACH_DESTINATION */
-			if (!isTargetAlive()) {
-				setState(State::REACH_DESTINATION);
-				break;
-			}
-
-			/* Attack state is an "enroute" task, meaning the unit will keep trying to attack even if a new destination is set. This is useful to 
-			   manoeuvre the unit so that it can detect and engage the target. */
-			std::ostringstream enrouteTaskSS;
-			enrouteTaskSS << "{"
-				<< "id = 'EngageUnit'" << ","
-				<< "targetID = " << targetID << ","
-				<< "}";
-			string enrouteTask = enrouteTaskSS.str();
-			setTask("Attacking " + getTargetName());
-			
-			if (!getHasTask())
-			{
-				setActiveDestination();
-				goToDestination(enrouteTask);
-			}
-
-			break;
+		else if (isActiveAWACS)
+		{
+			enrouteTask = "{ id = 'AWACS' }";
+			setTask("AWACS");
 		}
-		case State::FOLLOW: {
-			clearActivePath();
-			activeDestination = Coords(NULL);
+		else
+		{
+			enrouteTask = "nil";
+			setTask("Reaching destination");
+		}
 
-			/* If the leader is not alive (either not set or was destroyed) go back to IDLE */
-			if (!isLeaderAlive()) {
+		if (activeDestination == NULL || !getHasTask())
+		{
+			if (!setActiveDestination())
 				setState(State::IDLE);
-				break;
-			}
-
-			setTask("Following " + getTargetName());
-
-			Unit* leader = unitsManager->getUnit(leaderID);
-			if (!getHasTask()) {
-				if (leader != nullptr && leader->getAlive() && formationOffset != NULL)
-				{
-					std::ostringstream taskSS;
-					taskSS << "{"
-						<< "id = 'FollowUnit'" << ", "
-						<< "leaderID = " << leader->getID() << ","
-						<< "offset = {" 
-						<< "x = " << formationOffset.x << ","
-						<< "y = " << formationOffset.y << ","
-						<< "z = " << formationOffset.z 
-						<< "},"
-						<< "}";
-					Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
-					scheduler->appendCommand(command);
-					setHasTask(true);
-				}
-			}
-			break;
+			else
+				goToDestination(enrouteTask);
 		}
-		case State::REFUEL: {
-			setTask("Refueling");
-
-			if (!getHasTask()) {
-				if (fuel <= initialFuel) {
-					std::ostringstream taskSS;
-					taskSS << "{"
-						<< "id = 'Refuel'"
-						<< "}";
-					Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
-					scheduler->appendCommand(command);
-					setHasTask(true);
-				}
-				else {
+		else
+		{
+			if (isDestinationReached(getDestinationReachedThreshold()))
+			{
+				if (updateActivePath(looping) && setActiveDestination())
+					goToDestination(enrouteTask);
+				else
 					setState(State::IDLE);
-				}
 			}
+		}
+		break;
+	}
+	case State::LAND:
+	{
+		string enrouteTask = "{ id = 'Land' }";
+		setTask("Landing");
+
+		if (activeDestination == NULL)
+		{
+			setActiveDestination();
+			goToDestination(enrouteTask);
+		}
+		break;
+	}
+	case State::ATTACK:
+	{
+		/* If the target is not alive (either not set or was succesfully destroyed) go back to REACH_DESTINATION */
+		if (!isTargetAlive())
+		{
+			setState(State::REACH_DESTINATION);
 			break;
 		}
-		case State::BOMB_POINT: {
-			setTask("Bombing point");
 
-			if (!getHasTask()) {
-				std::ostringstream taskSS;
-				taskSS.precision(10);
+		/* Attack state is an "enroute" task, meaning the unit will keep trying to attack even if a new destination is set. This is useful to
+		   manoeuvre the unit so that it can detect and engage the target. */
+		std::ostringstream enrouteTaskSS;
+		enrouteTaskSS << "{"
+					  << "id = 'EngageUnit'"
+					  << ","
+					  << "targetID = " << targetID << ","
+					  << "}";
+		string enrouteTask = enrouteTaskSS.str();
+		setTask("Attacking " + getTargetName());
 
-				taskSS << "{id = 'Bombing', lat = " << targetPosition.lat << ", lng = " << targetPosition.lng << "}";
-				Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
-				scheduler->appendCommand(command);
-				setHasTask(true);
-			}
+		if (!getHasTask())
+		{
+			setActiveDestination();
+			goToDestination(enrouteTask);
+		}
+
+		break;
+	}
+	case State::FOLLOW:
+	{
+		clearActivePath();
+		activeDestination = Coords(NULL);
+
+		/* If the leader is not alive (either not set or was destroyed) go back to IDLE */
+		if (!isLeaderAlive())
+		{
+			setState(State::IDLE);
 			break;
 		}
-		case State::CARPET_BOMB: {
-			setTask("Carpet bombing");
 
-			if (!getHasTask()) {
+		setTask("Following " + getTargetName());
+
+		Unit *leader = unitsManager->getUnit(leaderID);
+		if (!getHasTask())
+		{
+			if (leader != nullptr && leader->getAlive() && formationOffset != NULL)
+			{
 				std::ostringstream taskSS;
-				taskSS.precision(10);
-
-				taskSS << "{id = 'CarpetBombing', lat = " << targetPosition.lat << ", lng = " << targetPosition.lng << "}";
-				Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
-				scheduler->appendCommand(command);
-				setHasTask(true);
-			}
-			break;
-		}
-		case State::BOMB_BUILDING: {
-			setTask("Bombing building");
-
-			if (!getHasTask()) {
-				std::ostringstream taskSS;
-				taskSS.precision(10);
-
-				taskSS << "{id = 'AttackMapObject', lat = " << targetPosition.lat << ", lng = " << targetPosition.lng << "}";
-				Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
-				scheduler->appendCommand(command);
-				setHasTask(true);
-			}
-			break;
-		}
-		case State::LAND_AT_POINT: {
-			setTask("Landing at point");
-
-			if (!getHasTask()) {
-				setActiveDestination();
-				std::ostringstream taskSS;
-				taskSS.precision(10),
 				taskSS << "{"
-					<< "id = 'LandAtPoint', "
-					<< "lat = " << activeDestination.lat << ", "
-					<< "lng = " << activeDestination.lng 
-					<< "}";
-				Command* command = dynamic_cast<Command*>(new SetTask(groupName, taskSS.str(), [this]() { this->setHasTaskAssigned(true); }));
+					   << "id = 'FollowUnit'"
+					   << ", "
+					   << "leaderID = " << leader->getID() << ","
+					   << "offset = {"
+					   << "x = " << formationOffset.x << ","
+					   << "y = " << formationOffset.y << ","
+					   << "z = " << formationOffset.z
+					   << "},"
+					   << "}";
+				Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																	   { this->setHasTaskAssigned(true); }));
 				scheduler->appendCommand(command);
 				setHasTask(true);
 			}
-			break;
 		}
-		default:
-			break;
+		break;
+	}
+	case State::REFUEL:
+	{
+		setTask("Refueling");
+
+		if (!getHasTask())
+		{
+			if (fuel <= initialFuel)
+			{
+				std::ostringstream taskSS;
+				taskSS << "{"
+					   << "id = 'Refuel'"
+					   << "}";
+				Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																	   { this->setHasTaskAssigned(true); }));
+				scheduler->appendCommand(command);
+				setHasTask(true);
+			}
+			else
+			{
+				setState(State::IDLE);
+			}
+		}
+		break;
+	}
+	case State::BOMB_POINT:
+	{
+		setTask("Bombing point");
+
+		if (!getHasTask())
+		{
+			std::ostringstream taskSS;
+			taskSS.precision(10);
+
+			taskSS << "{id = 'Bombing', lat = " << targetPosition.lat << ", lng = " << targetPosition.lng << "}";
+			Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																   { this->setHasTaskAssigned(true); }));
+			scheduler->appendCommand(command);
+			setHasTask(true);
+		}
+		break;
+	}
+	case State::CARPET_BOMB:
+	{
+		setTask("Carpet bombing");
+
+		if (!getHasTask())
+		{
+			std::ostringstream taskSS;
+			taskSS.precision(10);
+
+			taskSS << "{id = 'CarpetBombing', lat = " << targetPosition.lat << ", lng = " << targetPosition.lng << "}";
+			Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																   { this->setHasTaskAssigned(true); }));
+			scheduler->appendCommand(command);
+			setHasTask(true);
+		}
+		break;
+	}
+	case State::BOMB_BUILDING:
+	{
+		setTask("Bombing building");
+
+		if (!getHasTask())
+		{
+			std::ostringstream taskSS;
+			taskSS.precision(10);
+
+			taskSS << "{id = 'AttackMapObject', lat = " << targetPosition.lat << ", lng = " << targetPosition.lng << "}";
+			Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																   { this->setHasTaskAssigned(true); }));
+			scheduler->appendCommand(command);
+			setHasTask(true);
+		}
+		break;
+	}
+	case State::LAND_AT_POINT:
+	{
+		setTask("Landing at point");
+
+		if (!getHasTask())
+		{
+			setActiveDestination();
+			std::ostringstream taskSS;
+			taskSS.precision(10),
+				taskSS << "{"
+					   << "id = 'LandAtPoint', "
+					   << "lat = " << activeDestination.lat << ", "
+					   << "lng = " << activeDestination.lng
+					   << "}";
+			Command *command = dynamic_cast<Command *>(new SetTask(groupName, taskSS.str(), [this]()
+																   { this->setHasTaskAssigned(true); }));
+			scheduler->appendCommand(command);
+			setHasTask(true);
+		}
+		break;
+	}
+	default:
+		break;
 	}
 }
